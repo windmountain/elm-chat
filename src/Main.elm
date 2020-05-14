@@ -2,7 +2,12 @@ port module Main exposing (..)
 
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
-import Html exposing (Html, button, div, h1, img, text, textarea)
+import Element exposing (Element, alignRight, column, el, fill, layout, padding, rgb255, row, scrollbarY, spacing, width)
+import Element.Background as Background
+import Element.Border as Border
+import Element.Font as Font
+import Element.Input exposing (button, labelAbove, labelHidden, multiline)
+import Html exposing (Html, div, h1, img, text, textarea)
 import Html.Attributes exposing (src, value)
 import Html.Events exposing (onClick, onInput)
 import Url exposing (Url)
@@ -68,21 +73,44 @@ update msg model =
 ---- VIEW ----
 
 
-viewMessages : List String -> Html Msg
+viewMessages : List String -> Element Msg
 viewMessages messages =
-    div []
-        (List.map (\m -> div [] [ text m ]) messages)
+    Element.textColumn
+        [ scrollbarY
+        , Element.height (Element.fillPortion 2)
+        , Element.width Element.fill
+        ]
+        (List.map (\m -> Element.paragraph [] [ Element.text m ]) messages)
 
 
 view : Model -> Browser.Document Msg
 view model =
     { title = "Chat"
     , body =
-        [ div []
-            [ textarea [ onInput Draft, value model.draft ] []
-            , button [ onClick Send ] [ text "Send Message" ]
-            , viewMessages model.messages
+        [ layout
+            [ Background.color (rgb255 200 100 80)
+            , Element.height fill
             ]
+            (column [ Element.height fill, width fill, padding 40, spacing 40 ]
+                [ viewMessages model.messages
+                , multiline []
+                    { label = labelHidden "New Message"
+                    , onChange = Draft
+                    , placeholder = Nothing
+                    , spellcheck = False
+                    , text = model.draft
+                    }
+                , Element.Input.button
+                    [ Background.color (rgb255 20 20 200)
+                    , padding 20
+                    , alignRight
+                    , Font.color (rgb255 255 255 255)
+                    ]
+                    { label = Element.text "Send"
+                    , onPress = Just Send
+                    }
+                ]
+            )
         ]
     }
 
