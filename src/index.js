@@ -1,10 +1,22 @@
-import './main.css';
-import { Elm } from './Main.elm';
-import * as serviceWorker from './serviceWorker';
+import "./main.css";
+import { Elm } from "./Main.elm";
+import * as serviceWorker from "./serviceWorker";
 
-Elm.Main.init({
-  node: document.getElementById('root')
+const app = Elm.Main.init({
+  node: document.getElementById("root")
 });
+
+const socket = new WebSocket("ws://localhost:9898");
+
+window.app = app;
+app.ports.sendMessage.subscribe(function(message) {
+  console.log("BAM!", message);
+  socket.send(message);
+});
+
+setInterval(function() {
+  app.ports.messageReceiver.send(new Date().toISOString());
+}, 1000);
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.

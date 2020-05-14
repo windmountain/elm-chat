@@ -1,10 +1,21 @@
-module Main exposing (..)
+port module Main exposing (..)
 
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
-import Html exposing (Html, div, h1, img, text)
+import Html exposing (Html, button, div, h1, img, text)
 import Html.Attributes exposing (src)
+import Html.Events exposing (onClick)
 import Url exposing (Url)
+
+
+
+---- PORTS ----
+
+
+port sendMessage : String -> Cmd msg
+
+
+port messageReceiver : (String -> msg) -> Sub msg
 
 
 
@@ -12,12 +23,13 @@ import Url exposing (Url)
 
 
 type alias Model =
-    {}
+    { messages : List String
+    }
 
 
 init : flags -> Url -> Key -> ( Model, Cmd Msg )
 init f u k =
-    ( {}, Cmd.none )
+    ( { messages = [] }, Cmd.none )
 
 
 
@@ -26,24 +38,40 @@ init f u k =
 
 type Msg
     = NoOp
+    | Send
+    | Recv String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    ( model, Cmd.none )
+    case msg of
+        NoOp ->
+            ( model, Cmd.none )
+
+        Send ->
+            ( model, sendMessage "aaa" )
+
+        Recv message ->
+            ( { model | messages = model.messages ++ [ message ] }, Cmd.none )
 
 
 
 ---- VIEW ----
 
 
+viewMessages : List String -> Html Msg
+viewMessages messages =
+    div []
+        (List.map (\m -> div [] [ text m ]) messages)
+
+
 view : Model -> Browser.Document Msg
 view model =
-    { title = "aa"
+    { title = "Chat"
     , body =
         [ div []
-            [ img [ src "/logo.svg" ] []
-            , h1 [] [ text "Your Elm App is working!" ]
+            [ button [ onClick Send ] [ text "Send Message" ]
+            , viewMessages model.messages
             ]
         ]
     }
@@ -64,6 +92,15 @@ onUrlChange url =
 
 
 
+---- SUBSCRIPTIONS ----
+
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    messageReceiver Recv
+
+
+
 ---- PROGRAM ----
 
 
@@ -73,7 +110,7 @@ main =
         { view = view
         , init = init
         , update = update
-        , subscriptions = always Sub.none
+        , subscriptions = subscriptions
         , onUrlRequest = onUrlRequest
         , onUrlChange = onUrlChange
         }
