@@ -14,9 +14,9 @@ app.ports.sendMessage.subscribe(function(message) {
   socket.send(message);
 });
 
-setInterval(function() {
-  app.ports.messageReceiver.send(new Date().toISOString());
-}, 1000);
+socket.addEventListener("message", function(event) {
+  app.ports.messageReceiver.send(event.data);
+});
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.

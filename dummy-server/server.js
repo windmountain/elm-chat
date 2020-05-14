@@ -32,7 +32,7 @@ wsServer.on("request", function(request) {
       console.log("Sending message");
       connection.sendUTF(message(new Date()));
     }
-  }, 3000);
+  }, 9000);
   connection.on("message", function(message) {
     console.log("Received Message:", message.utf8Data);
     connection.sendUTF("Hi this is WebSocket server!");
