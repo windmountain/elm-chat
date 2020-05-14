@@ -10,7 +10,7 @@ const socket = new WebSocket("ws://localhost:9898");
 
 window.app = app;
 app.ports.sendMessage.subscribe(function(message) {
-  console.log("BAM!", message);
+  console.log("sending: ", message);
   socket.send(message);
 });
 

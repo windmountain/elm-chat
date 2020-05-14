@@ -12,6 +12,8 @@ console.log("server listening on port " + port.toString());
 
 const file = new static.Server("./public");
 
+let messages = [];
+
 const wsServer = new WebSocketServer({
   httpServer: server,
   autoAcceptConnections: false
@@ -32,10 +34,16 @@ wsServer.on("request", function(request) {
       console.log("Sending message");
       connection.sendUTF(message(new Date()));
     }
-  }, 9000);
+  }, 4000);
   connection.on("message", function(message) {
     console.log("Received Message:", message.utf8Data);
-    connection.sendUTF("Hi this is WebSocket server!");
+    messages = messages.concat(message);
+    connection.sendUTF(
+      JSON.stringify({
+        created_at: new Date().toISOString(),
+        body: message.utf8Data
+      })
+    );
   });
   connection.on("close", function(reasonCode, description) {
     console.log("Client has disconnected.");

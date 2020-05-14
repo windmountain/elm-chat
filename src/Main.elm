@@ -2,9 +2,9 @@ port module Main exposing (..)
 
 import Browser exposing (UrlRequest)
 import Browser.Navigation exposing (Key)
-import Html exposing (Html, button, div, h1, img, text)
-import Html.Attributes exposing (src)
-import Html.Events exposing (onClick)
+import Html exposing (Html, button, div, h1, img, text, textarea)
+import Html.Attributes exposing (src, value)
+import Html.Events exposing (onClick, onInput)
 import Url exposing (Url)
 
 
@@ -24,12 +24,17 @@ port messageReceiver : (String -> msg) -> Sub msg
 
 type alias Model =
     { messages : List String
+    , draft : String
     }
 
 
 init : flags -> Url -> Key -> ( Model, Cmd Msg )
 init f u k =
-    ( { messages = [] }, Cmd.none )
+    ( { messages = []
+      , draft = ""
+      }
+    , Cmd.none
+    )
 
 
 
@@ -38,6 +43,7 @@ init f u k =
 
 type Msg
     = NoOp
+    | Draft String
     | Send
     | Recv String
 
@@ -49,10 +55,13 @@ update msg model =
             ( model, Cmd.none )
 
         Send ->
-            ( model, sendMessage "aaa" )
+            ( { model | draft = "" }, sendMessage model.draft )
 
         Recv message ->
             ( { model | messages = model.messages ++ [ message ] }, Cmd.none )
+
+        Draft message ->
+            ( { model | draft = message }, Cmd.none )
 
 
 
@@ -70,7 +79,8 @@ view model =
     { title = "Chat"
     , body =
         [ div []
-            [ button [ onClick Send ] [ text "Send Message" ]
+            [ textarea [ onInput Draft, value model.draft ] []
+            , button [ onClick Send ] [ text "Send Message" ]
             , viewMessages model.messages
             ]
         ]
