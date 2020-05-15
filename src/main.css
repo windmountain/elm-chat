@@ -14,6 +14,14 @@ body {
   margin: 2em;
 }
 
+.children-ofa-none * {
+  overflow-anchor: none !important;
+}
+
+.ofa-auto {
+  overflow-anchor: auto !important;
+}
+
 button {
   margin-bottom: 2em;
 }

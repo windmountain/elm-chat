@@ -23,18 +23,36 @@ wsServer.on("request", function(request) {
   console.log("incoming request");
 
   const connection = request.accept(null, request.origin);
+  const body = function() {
+    const words = [
+      "ohm-mile",
+      "uningeniousness",
+      "ombrophilous",
+      "fieldmouse",
+      "well-scared",
+      "july",
+      "lairy",
+      "ajoint",
+      "isomerizing",
+      "Raybrook"
+    ];
+    return Array(5)
+      .fill(0)
+      .map(_ => words[Math.floor(Math.random() * words.length)])
+      .join(" ");
+  };
   setInterval(function() {
     if (connection.connected) {
       const message = function(date) {
         return JSON.stringify({
           created_at: date.toISOString(),
-          body: "This is a test"
+          body: body()
         });
       };
       console.log("Sending message");
       connection.sendUTF(message(new Date()));
     }
-  }, 4000);
+  }, 1000);
   connection.on("message", function(message) {
     console.log("Received Message:", message.utf8Data);
     messages = messages.concat(message);

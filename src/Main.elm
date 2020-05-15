@@ -7,6 +7,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input exposing (button, labelAbove, labelHidden, multiline)
+import Element.Keyed
 import Html exposing (Html, div, h1, img, text, textarea)
 import Html.Attributes exposing (src, value)
 import Html.Events exposing (onClick, onInput)
@@ -75,12 +76,36 @@ update msg model =
 
 viewMessages : List String -> Element Msg
 viewMessages messages =
-    Element.textColumn
+    let
+        pusher =
+            Element.paragraph
+                [ Element.height <| Element.fillPortion 1 ]
+                [ Element.text "" ]
+
+        d =
+            List.map (\m -> ( m, Element.paragraph [] [ Element.text m ] )) messages
+
+        dp =
+            List.append d
+                [ ( "anchor"
+                  , Element.paragraph
+                        [ Element.height <| Element.px 1
+                        , Element.htmlAttribute <| Html.Attributes.class "ofa-auto"
+                        ]
+                        [ Element.text "" ]
+                  )
+                ]
+
+        pdp =
+            List.append [ ( "pusher", pusher ) ] dp
+    in
+    Element.Keyed.column
         [ scrollbarY
         , Element.height (Element.fillPortion 2)
         , Element.width Element.fill
+        , Element.htmlAttribute <| Html.Attributes.class "children-ofa-none"
         ]
-        (List.map (\m -> Element.paragraph [] [ Element.text m ]) messages)
+        pdp
 
 
 view : Model -> Browser.Document Msg
@@ -101,7 +126,7 @@ view model =
                     , text = model.draft
                     }
                 , Element.Input.button
-                    [ Background.color (rgb255 20 20 200)
+                    [ Background.color (rgb255 0 128 128)
                     , padding 20
                     , alignRight
                     , Font.color (rgb255 255 255 255)
