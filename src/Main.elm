@@ -5,12 +5,13 @@ import Browser.Navigation exposing (Key)
 import Element exposing (Element, alignRight, column, el, fill, layout, padding, rgb255, row, scrollbarY, spacing, width)
 import Element.Background as Background
 import Element.Border as Border
-import Element.Font as Font
+import Element.Font
 import Element.Input exposing (button, labelAbove, labelHidden, multiline)
 import Element.Keyed
 import Html exposing (Html, div, h1, img, text, textarea)
 import Html.Attributes exposing (src, value)
 import Html.Events exposing (onClick, onInput)
+import Json.Decode as Decode
 import Url exposing (Url)
 
 
@@ -78,26 +79,33 @@ viewMessages : List String -> Element Msg
 viewMessages messages =
     let
         pusher =
-            Element.paragraph
-                [ Element.height <| Element.fillPortion 1 ]
-                [ Element.text "" ]
-
-        d =
-            List.map (\m -> ( m, Element.paragraph [] [ Element.text m ] )) messages
-
-        dp =
-            List.append d
-                [ ( "anchor"
-                  , Element.paragraph
-                        [ Element.height <| Element.px 1
-                        , Element.htmlAttribute <| Html.Attributes.class "ofa-auto"
-                        ]
-                        [ Element.text "" ]
-                  )
+            ( "pusher"
+            , Element.paragraph
+                [ Element.height <| Element.fillPortion 1
                 ]
+                [ Element.text "" ]
+            )
 
-        pdp =
-            List.append [ ( "pusher", pusher ) ] dp
+        messageEls =
+            List.map
+                (\m ->
+                    ( m
+                    , Element.paragraph
+                        [ Element.height <| Element.px 29
+                        ]
+                        [ Element.text m ]
+                    )
+                )
+                messages
+
+        anchor =
+            ( "anchor"
+            , Element.paragraph
+                [ Element.height <| Element.px 1
+                , Element.htmlAttribute <| Html.Attributes.class "ofa-auto"
+                ]
+                [ Element.text "" ]
+            )
     in
     Element.Keyed.column
         [ scrollbarY
@@ -105,7 +113,26 @@ viewMessages messages =
         , Element.width Element.fill
         , Element.htmlAttribute <| Html.Attributes.class "children-ofa-none"
         ]
-        pdp
+        (List.concat [ [ pusher ], messageEls, [ anchor ] ])
+
+
+onEnter : msg -> Element.Attribute msg
+onEnter msg =
+    Element.htmlAttribute
+        -- Must preventDefault or else just a new line.
+        -- Not keyup or else flickering extra line...
+        (Html.Events.preventDefaultOn "keydown"
+            (Decode.field "key" Decode.string
+                |> Decode.andThen
+                    (\key ->
+                        if key == "Enter" then
+                            Decode.succeed ( msg, True )
+
+                        else
+                            Decode.fail "Not the enter key"
+                    )
+            )
+        )
 
 
 view : Model -> Browser.Document Msg
@@ -118,7 +145,9 @@ view model =
             ]
             (column [ Element.height fill, width fill, padding 40, spacing 40 ]
                 [ viewMessages model.messages
-                , multiline []
+                , multiline
+                    [ onEnter Send
+                    ]
                     { label = labelHidden "New Message"
                     , onChange = Draft
                     , placeholder = Nothing
@@ -129,7 +158,7 @@ view model =
                     [ Background.color (rgb255 0 128 128)
                     , padding 20
                     , alignRight
-                    , Font.color (rgb255 255 255 255)
+                    , Element.Font.color (rgb255 255 255 255)
                     ]
                     { label = Element.text "Send"
                     , onPress = Just Send
