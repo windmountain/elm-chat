@@ -41,7 +41,7 @@ wsServer.on("request", function(request) {
       .map(_ => words[Math.floor(Math.random() * words.length)])
       .join(" ");
   };
-  setInterval(function() {
+  const send = function() {
     if (connection.connected) {
       const message = function(date) {
         return JSON.stringify({
@@ -52,7 +52,14 @@ wsServer.on("request", function(request) {
       console.log("Sending message");
       connection.sendUTF(message(new Date()));
     }
-  }, 1000);
+  };
+  const sendAndDelay = function() {
+    setTimeout(function() {
+      send();
+      sendAndDelay();
+    }, Math.random() * 5000);
+  };
+  sendAndDelay();
   connection.on("message", function(message) {
     console.log("Received Message:", message.utf8Data);
     messages = messages.concat(message);
