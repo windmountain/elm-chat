@@ -23,30 +23,21 @@ wsServer.on("request", function(request) {
   console.log("incoming request");
 
   const connection = request.accept(null, request.origin);
-  const body = function() {
-    const words = [
-      "ohm-mile",
-      "uningeniousness",
-      "ombrophilous",
-      "fieldmouse",
-      "well-scared",
-      "july",
-      "lairy",
-      "ajoint",
-      "isomerizing",
-      "Raybrook"
-    ];
-    return Array(5)
-      .fill(0)
-      .map(_ => words[Math.floor(Math.random() * words.length)])
-      .join(" ");
+  const bodies = [
+    "Haha",
+    "I'm just sending dummy messages",
+    "I'm not really listening"
+  ];
+  const body = function(bodies) {
+    return bodies[Math.floor(Math.random() * bodies.length)];
   };
+
   const send = function() {
     if (connection.connected) {
       const message = function(date) {
         return JSON.stringify({
           created_at: date.toISOString(),
-          body: body()
+          body: body(bodies)
         });
       };
       console.log("Sending message");
@@ -57,7 +48,7 @@ wsServer.on("request", function(request) {
     setTimeout(function() {
       send();
       sendAndDelay();
-    }, Math.random() * 5000);
+    }, Math.random() * 10000);
   };
   sendAndDelay();
   connection.on("message", function(message) {
