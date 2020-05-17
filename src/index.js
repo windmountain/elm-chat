@@ -15,7 +15,8 @@ app.ports.sendMessage.subscribe(function(message) {
 });
 
 socket.addEventListener("message", function(event) {
-  app.ports.messageReceiver.send(event.data);
+  console.log("receiving", event.data);
+  app.ports.messageReceiver.send(JSON.parse(event.data));
 });
 
 // If you want your app to work offline and load faster, you can change

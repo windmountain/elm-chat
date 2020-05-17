@@ -16,16 +16,6 @@ import Url exposing (Url)
 
 
 
----- PORTS ----
-
-
-port sendMessage : String -> Cmd msg
-
-
-port messageReceiver : (String -> msg) -> Sub msg
-
-
-
 ---- MODEL ----
 
 
@@ -52,7 +42,7 @@ type Msg
     = NoOp
     | Draft String
     | Send
-    | Recv String
+    | ReceiveMessage (Result Decode.Error Message)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -64,11 +54,20 @@ update msg model =
         Send ->
             ( { model | draft = "" }, sendMessage model.draft )
 
-        Recv message ->
-            ( { model | messages = model.messages ++ [ message ] }, Cmd.none )
-
         Draft message ->
             ( { model | draft = message }, Cmd.none )
+
+        ReceiveMessage result ->
+            case result of
+                Result.Ok s ->
+                    ( { model | messages = model.messages ++ [ s.body ] }, Cmd.none )
+
+                Result.Err error ->
+                    let
+                        e =
+                            Decode.errorToString error
+                    in
+                    ( { model | messages = model.messages ++ [ e ] }, Cmd.none )
 
 
 
@@ -221,12 +220,39 @@ onUrlChange url =
 
 
 
+---- DECODERS ----
+
+
+type alias Message =
+    { body : String
+    , time : String
+    }
+
+
+decoder : Decode.Decoder Message
+decoder =
+    Decode.map2 Message
+        (Decode.field "body" Decode.string)
+        (Decode.field "created_at" Decode.string)
+
+
+
+---- PORTS ----
+
+
+port sendMessage : String -> Cmd msg
+
+
+port messageReceiver : (Decode.Value -> msg) -> Sub msg
+
+
+
 ---- SUBSCRIPTIONS ----
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    messageReceiver Recv
+    messageReceiver (Decode.decodeValue decoder >> ReceiveMessage)
 
 
 
