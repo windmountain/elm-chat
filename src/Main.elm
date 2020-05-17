@@ -112,6 +112,7 @@ viewMessages messages =
         , Element.height (Element.fillPortion 2)
         , Element.width Element.fill
         , Element.htmlAttribute <| Html.Attributes.class "children-ofa-none"
+        , Background.color (rgb255 255 255 255)
         ]
         (List.concat [ [ pusher ], messageEls, [ anchor ] ])
 
@@ -177,7 +178,7 @@ view model =
     { title = "Chat"
     , body =
         [ layout
-            [ Background.color (rgb255 200 100 80)
+            [ Background.color (rgb255 200 200 200)
             , Element.height fill
             ]
             (column [ Element.height fill, width fill, padding 40, spacing 40 ]
