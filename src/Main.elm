@@ -116,21 +116,58 @@ viewMessages messages =
         (List.concat [ [ pusher ], messageEls, [ anchor ] ])
 
 
-onEnter : msg -> Element.Attribute msg
-onEnter msg =
-    Element.htmlAttribute
-        -- Must preventDefault or else just a new line.
-        -- Not keyup or else flickering extra line...
-        (Html.Events.preventDefaultOn "keydown"
-            (Decode.field "key" Decode.string
-                |> Decode.andThen
-                    (\key ->
-                        if key == "Enter" then
-                            Decode.succeed ( msg, True )
 
-                        else
-                            Decode.fail "Not the enter key"
-                    )
+---- EVENT HANDLING ____
+
+
+type EnterInput
+    = Enter
+    | ShiftEnter
+    | NotEnter
+
+
+keysToEnterInput : String -> Bool -> EnterInput
+keysToEnterInput key shiftKey =
+    case key of
+        "Enter" ->
+            case shiftKey of
+                True ->
+                    ShiftEnter
+
+                False ->
+                    Enter
+
+        _ ->
+            NotEnter
+
+
+enterInputToHandler : msg -> msg -> EnterInput -> ( msg, Bool )
+enterInputToHandler enterMsg noOpMsg enterInput =
+    -- Bool in (msg, Bool) represents whether to preventDefault.
+    -- Default is prevented only on enter, otherwise you get a newline
+    -- when you didn't want one
+    case enterInput of
+        Enter ->
+            ( enterMsg, True )
+
+        ShiftEnter ->
+            ( noOpMsg, False )
+
+        NotEnter ->
+            ( noOpMsg, False )
+
+
+onKeydown : msg -> msg -> Element.Attribute msg
+onKeydown msg msg2 =
+    -- Keyup does not work because it create's a flicker of a newline
+    Element.htmlAttribute
+        (Html.Events.preventDefaultOn "keydown"
+            (Decode.map (enterInputToHandler msg msg2)
+                (Decode.map2
+                    keysToEnterInput
+                    (Decode.field "key" Decode.string)
+                    (Decode.field "shiftKey" Decode.bool)
+                )
             )
         )
 
@@ -146,7 +183,7 @@ view model =
             (column [ Element.height fill, width fill, padding 40, spacing 40 ]
                 [ viewMessages model.messages
                 , multiline
-                    [ onEnter Send
+                    [ onKeydown Send NoOp
                     ]
                     { label = labelHidden "New Message"
                     , onChange = Draft
