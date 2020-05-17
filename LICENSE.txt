@@ -1,0 +1,4 @@
+Copyright 2020 Wind Mountain Software
+All Rights Reserved
+
+Please email me at zach@windmountainsoftware.com if you want to use windmountain/elm-chat for something.
