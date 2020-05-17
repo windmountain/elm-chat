@@ -175,7 +175,7 @@ onKeydown msg msg2 =
 
 view : Model -> Browser.Document Msg
 view model =
-    { title = "Chat"
+    { title = "elm-chat"
     , body =
         [ layout
             [ Background.color (rgb255 200 200 200)
