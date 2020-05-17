@@ -10,6 +10,8 @@ Apart from becoming a serviceable chat application of some kind, another goal of
 
 * `[Enter]` key to send a message, `[Shift + Enter]` to make a line break in the draft message.
 
+![Animated GIF of UI](docs/animated.gif)
+
 One other interesting thing to note is that the Elm community is deferring a WebSocket effect manager. The standard way to connect to a WebSocket is through Elm's ports system, which is what has been done here. Illustrated:
 
 ```
