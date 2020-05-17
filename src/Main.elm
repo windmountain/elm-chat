@@ -12,6 +12,8 @@ import Html exposing (Html, div, h1, img, text, textarea)
 import Html.Attributes exposing (src, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as Decode
+import Json.Decode.Extra exposing (datetime)
+import Time
 import Url exposing (Url)
 
 
@@ -20,7 +22,7 @@ import Url exposing (Url)
 
 
 type alias Model =
-    { messages : List String
+    { messages : List Message
     , draft : String
     }
 
@@ -59,51 +61,55 @@ update msg model =
 
         ReceiveMessage result ->
             case result of
-                Result.Ok s ->
-                    ( { model | messages = model.messages ++ [ s.body ] }, Cmd.none )
+                Result.Ok message ->
+                    ( { model | messages = model.messages ++ [ message ] }, Cmd.none )
 
                 Result.Err error ->
                     let
                         e =
                             Decode.errorToString error
                     in
-                    ( { model | messages = model.messages ++ [ e ] }, Cmd.none )
+                    ( model, Cmd.none )
 
 
 
 ---- VIEW ----
 
 
-viewMessages : List String -> Element Msg
+pusher : Element Msg
+pusher =
+    Element.paragraph
+        [ Element.height <| Element.fillPortion 1
+        ]
+        [ Element.text "" ]
+
+
+anchor : Element Msg
+anchor =
+    Element.paragraph
+        [ Element.height <| Element.px 1
+        , Element.htmlAttribute <| Html.Attributes.class "ofa-auto"
+        ]
+        [ Element.text "" ]
+
+
+messageEl : Message -> Element Msg
+messageEl m =
+    Element.paragraph [] [ Element.text m.body ]
+
+
+messageKey : Message -> String
+messageKey m =
+    m.body ++ (m.time |> Time.posixToMillis |> String.fromInt)
+
+
+viewMessages : List Message -> Element Msg
 viewMessages messages =
     let
-        pusher =
-            ( "pusher"
-            , Element.paragraph
-                [ Element.height <| Element.fillPortion 1
-                ]
-                [ Element.text "" ]
-            )
-
         messageEls =
             List.map
-                (\m ->
-                    ( m
-                    , Element.paragraph
-                        []
-                        [ Element.text m ]
-                    )
-                )
+                (\m -> ( messageKey m, messageEl m ))
                 messages
-
-        anchor =
-            ( "anchor"
-            , Element.paragraph
-                [ Element.height <| Element.px 1
-                , Element.htmlAttribute <| Html.Attributes.class "ofa-auto"
-                ]
-                [ Element.text "" ]
-            )
     in
     Element.Keyed.column
         [ scrollbarY
@@ -112,7 +118,7 @@ viewMessages messages =
         , Element.htmlAttribute <| Html.Attributes.class "children-ofa-none"
         , Background.color (rgb255 255 255 255)
         ]
-        (List.concat [ [ pusher ], messageEls, [ anchor ] ])
+        (List.concat [ [ ( "p", pusher ) ], messageEls, [ ( "a", anchor ) ] ])
 
 
 
@@ -225,15 +231,15 @@ onUrlChange url =
 
 type alias Message =
     { body : String
-    , time : String
+    , time : Time.Posix
     }
 
 
-decoder : Decode.Decoder Message
-decoder =
+messageDecoder : Decode.Decoder Message
+messageDecoder =
     Decode.map2 Message
         (Decode.field "body" Decode.string)
-        (Decode.field "created_at" Decode.string)
+        (Decode.field "created_at" datetime)
 
 
 
@@ -252,7 +258,7 @@ port messageReceiver : (Decode.Value -> msg) -> Sub msg
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    messageReceiver (Decode.decodeValue decoder >> ReceiveMessage)
+    messageReceiver (Decode.decodeValue messageDecoder >> ReceiveMessage)
 
 
 
