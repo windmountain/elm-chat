@@ -91,8 +91,7 @@ viewMessages messages =
                 (\m ->
                     ( m
                     , Element.paragraph
-                        [ Element.height <| Element.px 29
-                        ]
+                        []
                         [ Element.text m ]
                     )
                 )
