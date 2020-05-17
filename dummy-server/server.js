@@ -1,16 +1,16 @@
 // Node.js WebSocket server script
 const http = require("http");
+const handler = require("serve-handler");
 const WebSocketServer = require("websocket").server;
-const static = require("node-static");
 const port = 9898;
 
 const server = http.createServer(function(req, res) {
-  file.serve(req, res);
+  return handler(req, res, {
+    public: "./public"
+  });
 });
 server.listen(port);
 console.log("server listening on port " + port.toString());
-
-const file = new static.Server("./public");
 
 let messages = [];
 
@@ -24,20 +24,19 @@ wsServer.on("request", function(request) {
 
   const connection = request.accept(null, request.origin);
   const bodies = [
-    "Haha",
-    "I'm just sending dummy messages",
-    "I'm not really listening"
+    "I just send random canned messages.",
+    "I send messages at random intervals.",
+    "You can message me but I'm not really listening."
   ];
-  const body = function(bodies) {
-    return bodies[Math.floor(Math.random() * bodies.length)];
+  const pickRandom = function(list) {
+    return list[Math.floor(Math.random() * list.length)];
   };
-
-  const send = function() {
+  const send = function(body) {
     if (connection.connected) {
       const message = function(date) {
         return JSON.stringify({
           created_at: date.toISOString(),
-          body: body(bodies)
+          body: body || pickRandom(bodies)
         });
       };
       console.log("Sending message");
@@ -50,6 +49,7 @@ wsServer.on("request", function(request) {
       sendAndDelay();
     }, Math.random() * 10000);
   };
+  send("You are connected to a dummy chat server.");
   sendAndDelay();
   connection.on("message", function(message) {
     console.log("Received Message:", message.utf8Data);
