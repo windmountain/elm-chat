@@ -1,6 +1,6 @@
 # Elm Chat
 
-This is a Slack-like web UI for chat.
+A Slack-like web UI for chat.
 
 ## Details
 
@@ -13,9 +13,9 @@ Apart from becoming a serviceable chat application of some kind, another goal of
 One other interesting thing to note is that the Elm community is deferring a WebSocket effect manager. The standard way to connect to a WebSocket is through Elm's ports system, which is what has been done here. Illustrated:
 
 ```
-+---------+                 +--------------------+              +-------------+
-| ELM APP | -> ELM PORTS -> | JS INIT/WS WRAPPER | -> WS://  -> | CHAT SERVER |
-+---------+                 *--------------------+              +-------------+
++---------+                  +--------------------+               +-------------+
+| ELM APP | <-> ELM PORTS -> | JS INIT/WS WRAPPER | <-> WS:// <-> | CHAT SERVER |
++---------+                  *--------------------+               +-------------+
 ```
 
 ## Dummy chat server
