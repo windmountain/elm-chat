@@ -71,7 +71,7 @@ update msg model =
             )
 
         ScrollCommand ->
-            ( { model | scrolledToBottom = True }, sendScrollCommand "A" )
+            ( { model | scrolledToBottom = True }, sendScrollCommand "DOIT" )
 
         Draft message ->
             ( { model | draft = message }, Cmd.none )
@@ -83,7 +83,7 @@ update msg model =
             case result of
                 Result.Ok info ->
                     if info.yowza < 100 then
-                        ( { model | scrolledToBottom = True }, sendScrollCommand "AA" )
+                        ( { model | scrolledToBottom = True }, sendScrollCommand "DOIT" )
 
                     else
                         ( { model | scrolledToBottom = False }, Cmd.none )
@@ -94,16 +94,10 @@ update msg model =
         ReceiveMessage result ->
             case result of
                 Result.Ok message ->
-                    let
-                        cmd =
-                            if model.scrolledToBottom then
-                                sendScrollCommand "DOIT"
-
-                            else
-                                Cmd.none
-                    in
-                    ( { model | messages = model.messages ++ [ message ] }
-                    , cmd
+                    ( { model
+                        | messages = model.messages ++ [ message ]
+                      }
+                    , Cmd.none
                     )
 
                 Result.Err error ->
@@ -278,6 +272,14 @@ onKeydown msg msg2 =
 
 view : Model -> Browser.Document Msg
 view model =
+    let
+        c =
+            if model.scrolledToBottom then
+                rgb255 0 0 255
+
+            else
+                rgb255 255 0 0
+    in
     { title = "elm-chat"
     , body =
         [ layout
@@ -296,7 +298,7 @@ view model =
                     , text = model.draft
                     }
                 , Element.Input.button
-                    [ Background.color (rgb255 255 128 128)
+                    [ Background.color c
                     , padding 20
                     , alignRight
                     , Element.Font.color (rgb255 255 255 255)
@@ -383,7 +385,7 @@ port sendScrollCommand : String -> Cmd msg
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
+subscriptions model =
     Sub.batch
         [ messageReceiver (Decode.decodeValue messageDecoder >> ReceiveMessage)
         , scrollbottomReceiver (Decode.decodeValue scrollbottomDecoder >> ReceiveScrollbottom)
