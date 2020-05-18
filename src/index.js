@@ -19,6 +19,23 @@ socket.addEventListener("message", function(event) {
   app.ports.messageReceiver.send(JSON.parse(event.data));
 });
 
+app.ports.sendScrollCommand.subscribe(function(command) {
+  const el = document.getElementById("scrollable-1");
+  el.scrollTop = el.scrollTopMax;
+});
+
+const sel = document.getElementById("scrollable-1");
+sel.addEventListener("scroll", function(event) {
+  console.log("BAM", event);
+});
+
+setInterval(function() {
+  const el = document.getElementById("scrollable-1");
+  app.ports.scrollbottomReceiver.send({
+    yowza: el.scrollTopMax - el.scrollTop
+  });
+}, 1000);
+
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.
 // Learn more about service workers: https://bit.ly/CRA-PWA

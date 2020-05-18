@@ -27,6 +27,7 @@ type alias Model =
     { messages : List Message
     , draft : String
     , zone : Maybe Time.Zone
+    , scrolledToBottom : Bool
     }
 
 
@@ -35,6 +36,7 @@ init f u k =
     ( { messages = []
       , draft = ""
       , zone = Nothing
+      , scrolledToBottom = True
       }
     , Task.perform AdjustTimeZone Time.here
     )
@@ -48,7 +50,9 @@ type Msg
     = NoOp
     | Draft String
     | Send
+    | ScrollCommand
     | ReceiveMessage (Result Decode.Error Message)
+    | ReceiveScrollbottom (Result Decode.Error Scrollbottom)
     | AdjustTimeZone Time.Zone
 
 
@@ -59,7 +63,15 @@ update msg model =
             ( model, Cmd.none )
 
         Send ->
-            ( { model | draft = "" }, sendMessage model.draft )
+            ( { model | draft = "" }
+            , Cmd.batch
+                [ sendMessage model.draft
+                , sendScrollCommand "DOIT"
+                ]
+            )
+
+        ScrollCommand ->
+            ( { model | scrolledToBottom = True }, sendScrollCommand "A" )
 
         Draft message ->
             ( { model | draft = message }, Cmd.none )
@@ -67,10 +79,32 @@ update msg model =
         AdjustTimeZone zone ->
             ( { model | zone = Just zone }, Cmd.none )
 
+        ReceiveScrollbottom result ->
+            case result of
+                Result.Ok info ->
+                    if info.yowza < 100 then
+                        ( { model | scrolledToBottom = True }, sendScrollCommand "AA" )
+
+                    else
+                        ( { model | scrolledToBottom = False }, Cmd.none )
+
+                Result.Err _ ->
+                    ( model, Cmd.none )
+
         ReceiveMessage result ->
             case result of
                 Result.Ok message ->
-                    ( { model | messages = model.messages ++ [ message ] }, Cmd.none )
+                    let
+                        cmd =
+                            if model.scrolledToBottom then
+                                sendScrollCommand "DOIT"
+
+                            else
+                                Cmd.none
+                    in
+                    ( { model | messages = model.messages ++ [ message ] }
+                    , cmd
+                    )
 
                 Result.Err error ->
                     let
@@ -177,6 +211,7 @@ messagesView zone messages =
     in
     Element.Keyed.column
         [ scrollbarY
+        , Element.htmlAttribute <| Html.Attributes.id "scrollable-1"
         , Element.height (Element.fillPortion 2)
         , Element.width Element.fill
         , Element.htmlAttribute <| Html.Attributes.class "children-ofa-none"
@@ -261,6 +296,15 @@ view model =
                     , text = model.draft
                     }
                 , Element.Input.button
+                    [ Background.color (rgb255 255 128 128)
+                    , padding 20
+                    , alignRight
+                    , Element.Font.color (rgb255 255 255 255)
+                    ]
+                    { label = Element.text "Scrollbottom"
+                    , onPress = Just ScrollCommand
+                    }
+                , Element.Input.button
                     [ Background.color (rgb255 0 128 128)
                     , padding 20
                     , alignRight
@@ -308,6 +352,16 @@ messageDecoder =
         (Decode.field "from" Decode.string)
 
 
+type alias Scrollbottom =
+    { yowza : Int }
+
+
+scrollbottomDecoder : Decode.Decoder Scrollbottom
+scrollbottomDecoder =
+    Decode.map Scrollbottom
+        (Decode.field "yowza" Decode.int)
+
+
 
 ---- PORTS ----
 
@@ -318,13 +372,22 @@ port sendMessage : String -> Cmd msg
 port messageReceiver : (Decode.Value -> msg) -> Sub msg
 
 
+port scrollbottomReceiver : (Decode.Value -> msg) -> Sub msg
+
+
+port sendScrollCommand : String -> Cmd msg
+
+
 
 ---- SUBSCRIPTIONS ----
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    messageReceiver (Decode.decodeValue messageDecoder >> ReceiveMessage)
+    Sub.batch
+        [ messageReceiver (Decode.decodeValue messageDecoder >> ReceiveMessage)
+        , scrollbottomReceiver (Decode.decodeValue scrollbottomDecoder >> ReceiveScrollbottom)
+        ]
 
 
 
