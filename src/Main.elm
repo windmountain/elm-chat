@@ -144,9 +144,9 @@ messageView maybeZone m =
     in
     Element.row
         [ Element.paddingEach
-            { top = 0
+            { top = 1
             , right = 10
-            , bottom = 10
+            , bottom = 9
             , left = 10
             }
         , Element.spacing 10
@@ -177,12 +177,6 @@ messagesView zone messages =
     in
     Element.Keyed.column
         [ scrollbarY
-        , Element.paddingEach
-            { top = 0
-            , right = 0
-            , bottom = 0
-            , left = 0
-            }
         , Element.height (Element.fillPortion 2)
         , Element.width Element.fill
         , Element.htmlAttribute <| Html.Attributes.class "children-ofa-none"
