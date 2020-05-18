@@ -13,7 +13,8 @@ import Html.Attributes exposing (src, value)
 import Html.Events exposing (onClick, onInput)
 import Json.Decode as Decode
 import Json.Decode.Extra exposing (datetime)
-import Time
+import Task
+import Time exposing (Zone)
 import Url exposing (Url)
 
 
@@ -24,6 +25,7 @@ import Url exposing (Url)
 type alias Model =
     { messages : List Message
     , draft : String
+    , zone : Maybe Time.Zone
     }
 
 
@@ -31,8 +33,9 @@ init : flags -> Url -> Key -> ( Model, Cmd Msg )
 init f u k =
     ( { messages = []
       , draft = ""
+      , zone = Nothing
       }
-    , Cmd.none
+    , Task.perform AdjustTimeZone Time.here
     )
 
 
@@ -45,6 +48,7 @@ type Msg
     | Draft String
     | Send
     | ReceiveMessage (Result Decode.Error Message)
+    | AdjustTimeZone Time.Zone
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -58,6 +62,9 @@ update msg model =
 
         Draft message ->
             ( { model | draft = message }, Cmd.none )
+
+        AdjustTimeZone zone ->
+            ( { model | zone = Just zone }, Cmd.none )
 
         ReceiveMessage result ->
             case result of
@@ -93,22 +100,61 @@ anchor =
         [ Element.text "" ]
 
 
-messageEl : Message -> Element Msg
-messageEl m =
-    Element.paragraph [] [ Element.text m.body ]
+avatar : String -> Element Msg
+avatar from =
+    if from == "You" then
+        Element.image
+            [ Element.height <| Element.px 75
+            , Element.width <| Element.px 75
+            ]
+            { src = "https://via.placeholder.com/150/99AA66"
+            , description = ""
+            }
+
+    else
+        Element.image
+            [ Element.height <| Element.px 75
+            , Element.width <| Element.px 75
+            ]
+            { src = "https://via.placeholder.com/150/6699AA"
+            , description = ""
+            }
+
+
+messageEl : Maybe Time.Zone -> Message -> Element Msg
+messageEl maybeZone m =
+    let
+        time : String
+        time =
+            case maybeZone of
+                Just zone ->
+                    (Time.toHour zone m.time |> String.fromInt)
+                        ++ ":"
+                        ++ (Time.toMinute zone m.time |> String.fromInt)
+
+                Nothing ->
+                    "aa"
+    in
+    Element.paragraph
+        []
+        [ avatar m.from
+        , Element.text m.from
+        , Element.text time
+        , Element.text m.body
+        ]
 
 
 messageKey : Message -> String
 messageKey m =
-    m.body ++ (m.time |> Time.posixToMillis |> String.fromInt)
+    m.from ++ (m.time |> Time.posixToMillis |> String.fromInt)
 
 
-viewMessages : List Message -> Element Msg
-viewMessages messages =
+viewMessages : Maybe Time.Zone -> List Message -> Element Msg
+viewMessages zone messages =
     let
         messageEls =
             List.map
-                (\m -> ( messageKey m, messageEl m ))
+                (\m -> ( messageKey m, messageEl zone m ))
                 messages
     in
     Element.Keyed.column
@@ -186,7 +232,7 @@ view model =
             , Element.height fill
             ]
             (column [ Element.height fill, width fill, padding 40, spacing 40 ]
-                [ viewMessages model.messages
+                [ viewMessages model.zone model.messages
                 , multiline
                     [ onKeydown Send NoOp
                     ]
@@ -232,14 +278,16 @@ onUrlChange url =
 type alias Message =
     { body : String
     , time : Time.Posix
+    , from : String
     }
 
 
 messageDecoder : Decode.Decoder Message
 messageDecoder =
-    Decode.map2 Message
+    Decode.map3 Message
         (Decode.field "body" Decode.string)
         (Decode.field "created_at" datetime)
+        (Decode.field "from" Decode.string)
 
 
 
