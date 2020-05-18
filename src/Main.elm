@@ -138,8 +138,8 @@ messageEl maybeZone m =
     Element.paragraph
         []
         [ avatar m.from
-        , Element.text m.from
-        , Element.text time
+        , Element.text <| m.from ++ " ("
+        , Element.text <| time ++ "): "
         , Element.text m.body
         ]
 
