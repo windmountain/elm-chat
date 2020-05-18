@@ -175,14 +175,13 @@ messagesView zone messages =
                 (\m -> ( messageKey m, messageView zone m ))
                 messages
     in
-    Element.Keyed.column
-        [ scrollbarY
-        , Element.height (Element.fillPortion 2)
+    Element.Keyed.reverseColumn
+        [ Element.height (Element.fillPortion 2)
         , Element.width Element.fill
         , Element.htmlAttribute <| Html.Attributes.class "children-ofa-none"
         , Background.color (rgb255 255 255 255)
         ]
-        (List.concat [ [ ( "p", pusher ) ], messageEls, [ ( "a", anchor ) ] ])
+        (List.concat [ [ ( "p", anchor ) ], messageEls, [ ( "a", pusher ) ] ])
 
 
 

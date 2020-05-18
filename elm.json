@@ -1,7 +1,8 @@
 {
     "type": "application",
     "source-directories": [
-        "src"
+        "src",
+        "../elm-ui/src"
     ],
     "elm-version": "0.19.1",
     "dependencies": {
@@ -13,12 +14,11 @@
             "elm/time": "1.0.0",
             "elm/url": "1.0.0",
             "elm-community/json-extra": "4.2.0",
-            "mdgriffith/elm-ui": "1.1.5",
-            "samhstn/time-format": "1.0.0"
+            "samhstn/time-format": "1.0.0",
+            "elm/virtual-dom": "1.0.2"
         },
         "indirect": {
             "elm/parser": "1.1.0",
-            "elm/virtual-dom": "1.0.2",
             "rtfeldman/elm-iso8601-date-strings": "1.1.3"
         }
     },
