@@ -15,6 +15,7 @@ import Json.Decode as Decode
 import Json.Decode.Extra exposing (datetime)
 import Task
 import Time exposing (Zone)
+import Time.Format
 import Url exposing (Url)
 
 
@@ -100,47 +101,64 @@ anchor =
         [ Element.text "" ]
 
 
+avatarSize : Int
+avatarSize =
+    50
+
+
 avatar : String -> Element Msg
 avatar from =
-    if from == "You" then
-        Element.image
-            [ Element.height <| Element.px 75
-            , Element.width <| Element.px 75
-            ]
-            { src = "https://via.placeholder.com/150/99AA66"
-            , description = ""
-            }
-
-    else
-        Element.image
-            [ Element.height <| Element.px 75
-            , Element.width <| Element.px 75
-            ]
-            { src = "https://via.placeholder.com/150/6699AA"
-            , description = ""
-            }
-
-
-messageEl : Maybe Time.Zone -> Message -> Element Msg
-messageEl maybeZone m =
     let
-        time : String
-        time =
-            case maybeZone of
-                Just zone ->
-                    (Time.toHour zone m.time |> String.fromInt)
-                        ++ ":"
-                        ++ (Time.toMinute zone m.time |> String.fromInt)
+        src =
+            if from == "You" then
+                "99AA66"
 
-                Nothing ->
-                    "aa"
+            else
+                "FF00FF"
     in
-    Element.paragraph
-        []
+    Element.image
+        [ Element.height <| Element.px avatarSize
+        , Element.width <| Element.px avatarSize
+        , Element.alignTop
+        ]
+        { src = "https://via.placeholder.com/150/" ++ src
+        , description = ""
+        }
+
+
+format : Maybe Time.Zone -> Time.Posix -> String
+format maybeZone time =
+    case maybeZone of
+        Just zone ->
+            Time.Format.format zone "padHour:padMinute " <| Time.posixToMillis time
+
+        Nothing ->
+            ""
+
+
+messageView : Maybe Time.Zone -> Message -> Element Msg
+messageView maybeZone m =
+    let
+        time =
+            format maybeZone m.time
+    in
+    Element.row
+        [ Element.paddingEach
+            { top = 0
+            , right = 10
+            , bottom = 10
+            , left = 10
+            }
+        , Element.spacing 10
+        ]
         [ avatar m.from
-        , Element.text <| m.from ++ " ("
-        , Element.text <| time ++ "): "
-        , Element.text m.body
+        , Element.column [ Element.alignTop, Element.width <| Element.fill, Element.padding 0 ]
+            [ Element.row [ Element.spacing 10 ]
+                [ Element.el [ Element.Font.bold ] (Element.text <| m.from)
+                , Element.el [] (Element.text <| time)
+                ]
+            , Element.paragraph [] [ Element.text m.body ]
+            ]
         ]
 
 
@@ -149,16 +167,22 @@ messageKey m =
     m.from ++ (m.time |> Time.posixToMillis |> String.fromInt)
 
 
-viewMessages : Maybe Time.Zone -> List Message -> Element Msg
-viewMessages zone messages =
+messagesView : Maybe Time.Zone -> List Message -> Element Msg
+messagesView zone messages =
     let
         messageEls =
             List.map
-                (\m -> ( messageKey m, messageEl zone m ))
+                (\m -> ( messageKey m, messageView zone m ))
                 messages
     in
     Element.Keyed.column
         [ scrollbarY
+        , Element.paddingEach
+            { top = 0
+            , right = 0
+            , bottom = 0
+            , left = 0
+            }
         , Element.height (Element.fillPortion 2)
         , Element.width Element.fill
         , Element.htmlAttribute <| Html.Attributes.class "children-ofa-none"
@@ -232,7 +256,7 @@ view model =
             , Element.height fill
             ]
             (column [ Element.height fill, width fill, padding 40, spacing 40 ]
-                [ viewMessages model.zone model.messages
+                [ messagesView model.zone model.messages
                 , multiline
                     [ onKeydown Send NoOp
                     ]
