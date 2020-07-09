@@ -1,3 +1,19 @@
+# PRETTY MUCH ABANDONED!
+
+This little experiment kind of got stuck and I moved on to a different way of implementing an Elm chat app elsewhere. Key takeaways?
+* It was challenging to build this with Elm-UI. It was much easier to do this in CSS by putting the messages in a `{ display: flex; flex-direction: column-reverse }` and going from there.
+* The desired scrolling behavior can come almost "for free" with this bit of JavaScript...
+`
+function scrollToBottom() {
+  const el = document.getElementById('messages');  // select the element containing all the messages
+  el.style.scrollBehavior = "smooth"; // toggle the browser's native scrolling behavior to smooth, which means it will animate
+  el.scrollTop = el.scrollHeight; // scroll to the bottom
+}
+` 
+...and hooked up to an Elm port to be executed when a new message comes in.
+* Getting that "ever so slightly stuck at the bottom until you deliberately scroll up instead of just responding to increased height of the container" behavior was tricky. Doing that well might require bringing the scroll measurement and manipulation into the Elm program. Fortunately, the docs for [Browser.Dom#getViewportOf](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Dom#getViewportOf) anticipate this exact use case.
+
+
 # Elm Chat
 
 A Slack-like web UI for chat.
