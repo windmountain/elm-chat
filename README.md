@@ -1,4 +1,4 @@
-# PRETTY MUCH ABANDONED!
+# Basically Abandoned!
 
 This little experiment kind of got stuck and I moved on to a different way of implementing an Elm chat app elsewhere. Key takeaways?
 * It was challenging to build this with Elm-UI. It was much easier to do this in CSS by putting the messages in a `{ display: flex; flex-direction: column-reverse }` and going from there.
